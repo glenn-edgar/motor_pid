@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2021 The Pybricks Authors
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+
+/**
+ * Copies a 128-bit UUID from @p src to a buffer @p dst,
+ * which is a buffer used by a little endian medium.
+ *
+ * According to RFC 4122, the UUID is grouped into the following:
+ * 1) One 32-bit
+ * 2) Two 16-bit
+ * 3) Eight 8-bit
+ *
+ * @param [in]  dst     The destination that will receive the
+ *                      resulting little-endian-formatted UUID.
+ * @param [in]  src     The UUID in host byte order.
+ */
+void pbio_uuid128_le_copy(uint8_t *dst, const uint8_t *src) {
+    dst[0] = src[3];
+    dst[1] = src[2];
+    dst[2] = src[1];
+    dst[3] = src[0];
+
+    dst[4] = src[5];
+    dst[5] = src[4];
+
+    dst[6] = src[7];
+    dst[7] = src[6];
+
+    memcpy(&dst[8], &src[8], 8);
+}
+
+/**
+ * Compares two 128-bit UUIDs with opposite byte ordering for equality.
+ *
+ * @param [in]  uuid1   A 128-bit UUID in little endian order.
+ * @param [in]  uuid2   A 128-bit UUID in little big order.
+ * @return              True if the UUIDs are the same, otherwise false.
+ */
+bool pbio_uuid128_reverse_compare(const uint8_t *uuid1, const uint8_t *uuid2) {
+    for (int i = 0; i < 16; i++) {
+        if (uuid1[i] != uuid2[15 - i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Copies a 128-bit UUID from @p src to @p dst while reversing the byte order.
+ *
+ * @param [in]  dst     The destination array.
+ * @param [in]  src     The UUID to reverse and copy.
+ */
+void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src) {
+    for (int i = 0; i < 16; i++) {
+        dst[i] = src[15 - i];
+    }
+}
+
+/**
+ * Performs a rising-edge oneshot test.
+ * @param [in]  value   The value being tested.
+ * @param [in]  state   The current internal state of the oneshot.
+ * @return              True if the value transitioned from false to true since
+ *                      the last call, otherwise false.
+ */
+bool pbio_oneshot(bool value, bool *state) {
+    bool ret = false;
+
+    if (value && !*state) {
+        ret = true;
+    }
+
+    *state = value;
+
+    return ret;
+}
+
+/**
+ * Checks if a time sample is equal to or newer than a given base time stamp.
+ *
+ * @param [in] sample         Sample time.
+ * @param [in] base           Base time to compare to.
+ * @return                    True if sample time is equal to or newer than base time, else false.
+ */
+bool pbio_util_time_has_passed(uint32_t sample, uint32_t base) {
+    return sample - base < UINT32_MAX / 2;
+}
